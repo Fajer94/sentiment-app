@@ -29,22 +29,20 @@
             if (!text.trim()) return alert("Please enter text.");
             
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = "Analyzing sentiment securely through backend proxy...";
+            resultDiv.innerHTML = "Processing text securely through Vercel Serverless Function...";
 
             try {
-                // FIXED: Directing locally to bypass browser security blocks
-                const response = await fetch("/hf-api/pipeline/text-classification/Fajer94/sentiment_model", {
+                // Calls our secure backend edge pipeline handler
+                const response = await fetch("/api/predict", {
                     method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ inputs: text.trim() }),
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: text.trim() }),
                 });
 
                 const data = await response.json();
                 resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {
-                resultDiv.innerHTML = "An error occurred while connecting to the proxy pipeline.";
+                resultDiv.innerHTML = "An error occurred while connecting to the application backend.";
             }
         }
     </script>
