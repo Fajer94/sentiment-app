@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/hf-api/:path*",
+      "destination": "https://huggingface.co*"
+    }
+  ]
+}
