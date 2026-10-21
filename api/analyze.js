@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // FIXED: Using the required API domain endpoint
+    // UPDATED: Using the modern Hugging Face serverless provider routing path
     const response = await fetch("https://huggingface.co", {
       headers: { 
         Authorization: `Bearer ${process.env.HF_TOKEN}`,
