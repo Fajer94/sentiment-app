@@ -29,24 +29,22 @@
             if (!text.trim()) return alert("Please enter text.");
             
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = "Analyzing sentiment via Hugging Face Pipeline API...";
+            resultDiv.innerHTML = "Analyzing sentiment securely through backend proxy...";
 
             try {
-                // Using the absolute fallback JSON gateway to query text classification structures
-                const response = await fetch("https://huggingface.co", {
+                // FIXED: Directing locally to bypass browser security blocks
+                const response = await fetch("/hf-api/pipeline/text-classification/Fajer94/sentiment_model", {
                     method: "POST",
                     headers: { 
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ 
-                        inputs: text.trim()
-                    }),
+                    body: JSON.stringify({ inputs: text.trim() }),
                 });
 
                 const data = await response.json();
                 resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n${JSON.stringify(data, null, 2)}`;
             } catch (error) {
-                resultDiv.innerHTML = "An error occurred while connecting to the model pipeline.";
+                resultDiv.innerHTML = "An error occurred while connecting to the proxy pipeline.";
             }
         }
     </script>
