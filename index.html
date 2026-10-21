@@ -5,57 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>😊 Sentiment Analyzer</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; background: #f4f7f6; color: #333; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        textarea { width: 100%; height: 120px; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; resize: vertical; }
-        button { background: #0070f3; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 600; transition: background 0.2s; }
-        button:hover { background: #0051cb; }
-        #result { margin-top: 25px; padding: 15px; border-radius: 6px; background: #f8f9fa; border: 1px solid #e9ecef; display: none; white-space: pre-wrap; font-family: monospace; }
+        :root {
+            --primary: #0070f3;
+            --primary-hover: #0051cb;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-muted: #666666;
+            --border: #e9ecef;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 550px;
+            margin: 60px auto;
+            padding: 0 20px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 14px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 15px;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        button:hover {
+            background: var(--primary-hover);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .status-box {
+            margin-top: 25px;
+            padding: 16px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            display: none;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .metric-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .POSITIVE { background: #d4edda; color: #155724; }
+        .NEGATIVE { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>😊 Sentiment Analyzer</h1>
-        <p>Discover the sentiment behind your text instantly using on-device machine learning.</p>
-        <textarea id="textInput" placeholder="Type something you would like to analyze..."></textarea>
-        <button onclick="analyzeSentiment()">Analyze Sentiment</button>
-        <div id="result"></div>
+        <p>Analyze text sentiment in real-time. This version runs completely in your browser via local on-device machine learning inference.</p>
+        
+        <textarea id="textInput" placeholder="Type a sentence you would like to analyze..."></textarea>
+        <button id="submitBtn" onclick="handleInference()">Analyze Sentiment</button>
+        
+        <div id="statusOutput" class="status-box"></div>
     </div>
 
-    <!-- Import modern Transformers.js framework straight from a CDN -->
     <script type="module">
         import { pipeline } from 'https://jsdelivr.net';
         
         let classifier = null;
-        const resultDiv = document.getElementById('result');
+        const statusOutput = document.getElementById('statusOutput');
+        const submitBtn = document.getElementById('submitBtn');
 
-        window.analyzeSentiment = async function() {
-            const text = document.getElementById('textInput').value;
-            if (!text.trim()) return alert("Please enter text.");
-            
-            resultDiv.style.display = 'block';
-            
-            // Initialize the production-ready model if it hasn't loaded yet
+        // Handles pipeline streaming downloading optimizations asynchronously
+        async function loadModelWithFeedback() {
             if (!classifier) {
-                resultDiv.innerHTML = "🔄 First run: Downloading optimized sentiment model to your browser cache (takes ~10 seconds)...";
+                submitBtn.disabled = true;
+                statusOutput.style.display = 'block';
+                statusOutput.innerHTML = "🔄 <strong>System warming up:</strong> Downloading optimized sentiment model components directly into your secure browser runtime cache (takes ~10 seconds)...";
+                
                 try {
                     classifier = await pipeline('text-classification', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
-                } catch (e) {
-                    resultDiv.innerHTML = "⚠️ Error loading the public model pipeline.";
-                    return;
+                    statusOutput.innerHTML = "✅ <strong>Model loaded successfully!</strong> Ready for text input execution.";
+                    submitBtn.disabled = false;
+                } catch (error) {
+                    statusOutput.innerHTML = "⚠️ <strong>Initialization Error:</strong> Failed to fetch runtime binary components.";
+                    submitBtn.disabled = false;
+                    console.error(error);
                 }
             }
+        }
+
+        window.handleInference = async function() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) return alert("Please enter text before running analysis.");
             
-            resultDiv.innerHTML = "🧠 Running on-device sentiment classification...";
+            statusOutput.style.display = 'block';
+            
+            if (!classifier) {
+                await loadModelWithFeedback();
+            }
+            
+            statusOutput.innerHTML = "🧠 <strong>Running classification inference layers locally...</strong>";
+            
             try {
-                const results = await classifier(text.trim());
+                const [results] = await classifier(text);
+                const rawLabel = results.label.toUpperCase();
+                const scorePercentage = (results.score * 100).toFixed(2);
                 
-                // Format output nicely on the screen
-                const label = results[0].label;
-                const score = (results[0].score * 100).toFixed(2);
-                resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n\n🎯 Predicted Sentiment: <strong>${label}</strong>\n📈 Confidence Score: <strong>${score}%</strong>`;
-            } catch (error) {
-                resultDiv.innerHTML = "⚠️ Could not run classification on your text.";
+                statusOutput.innerHTML = `
+                    <strong>Analysis Results:</strong><br><br>
+                    🎯 Predicted Sentiment: <span class="metric-badge ${rawLabel}">${rawLabel}</span><br>
+                    📈 Confidence Level: <strong>${scorePercentage}%</strong>
+                `;
+            } catch (err) {
+                statusOutput.innerHTML = "⚠️ <strong>Processing Error:</strong> An error occurred inside the array classification execution stack.";
+                console.error(err);
             }
         };
     </script>
