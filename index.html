@@ -1,19 +1,48 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>My static Space</title>
-		<link rel="stylesheet" href="style.css" />
-	</head>
-	<body>
-		<div class="card">
-			<h1>Welcome to your static Space!</h1>
-			<p>You can modify this app directly by editing <i>index.html</i> in the Files and versions tab.</p>
-			<p>
-				Also don't forget to check the
-				<a href="https://huggingface.co/docs/hub/spaces" target="_blank">Spaces documentation</a>.
-			</p>
-		</div>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>😊 Sentiment Analyzer</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; background: #f4f7f6; color: #333; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        textarea { width: 100%; height: 120px; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; resize: vertical; }
+        button { background: #0070f3; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 600; transition: background 0.2s; }
+        button:hover { background: #0051cb; }
+        #result { margin-top: 25px; padding: 15px; border-radius: 6px; background: #f8f9fa; border: 1px solid #e9ecef; display: none; white-space: pre-wrap; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>😊 Sentiment Analyzer</h1>
+        <p>Discover the sentiment behind your text using your custom machine learning model.</p>
+        <textarea id="textInput" placeholder="Type something you would like to analyze..."></textarea>
+        <button onclick="analyzeSentiment()">Analyze Sentiment</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function analyzeSentiment() {
+            const text = document.getElementById('textInput').value;
+            const resultDiv = document.getElementById('result');
+            if (!text.trim()) return alert("Please enter text.");
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = "Analyzing sentiment...";
+
+            try {
+                const response = await fetch("/api/analyze", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: text }),
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.innerHTML = "An error occurred while connecting to the backend handler.";
+            }
+        }
+    </script>
+</body>
 </html>
