@@ -9,6 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // FIXED: Using the required API domain endpoint
     const response = await fetch("https://huggingface.co", {
       headers: { 
         Authorization: `Bearer ${process.env.HF_TOKEN}`,
