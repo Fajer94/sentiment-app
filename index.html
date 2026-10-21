@@ -10,16 +10,15 @@
         textarea { width: 100%; height: 120px; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; resize: vertical; }
         button { background: #0070f3; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 600; transition: background 0.2s; }
         button:hover { background: #0051cb; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
         #result { margin-top: 25px; padding: 15px; border-radius: 6px; background: #f8f9fa; border: 1px solid #e9ecef; display: none; white-space: pre-wrap; font-family: monospace; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>😊 Sentiment Analyzer</h1>
-        <p>Discover the sentiment behind your text using browser-based machine learning inference.</p>
+        <p>Discover the sentiment behind your text instantly using on-device machine learning.</p>
         <textarea id="textInput" placeholder="Type something you would like to analyze..."></textarea>
-        <button id="btn" onclick="analyzeSentiment()">Analyze Sentiment</button>
+        <button onclick="analyzeSentiment()">Analyze Sentiment</button>
         <div id="result"></div>
     </div>
 
@@ -29,26 +28,6 @@
         
         let classifier = null;
         const resultDiv = document.getElementById('result');
-        const button = document.getElementById('btn');
-
-        async function initModel() {
-            if (!classifier) {
-                button.disabled = true;
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = "🔄 System warming up: Downloading your custom model configuration straight to your browser cache...";
-                
-                try {
-                    // Downloads your model configuration and files natively via Javascript
-                    classifier = await pipeline('text-classification', 'Fajer94/sentiment_model');
-                    resultDiv.innerHTML = "✅ Model loaded successfully! Type a sentence above.";
-                    button.disabled = false;
-                } catch (e) {
-                    resultDiv.innerHTML = "⚠️ Error initialization: Make sure your model repo contains standard weights or has ONNX versions exported.";
-                    button.disabled = false;
-                    console.error(e);
-                }
-            }
-        }
 
         window.analyzeSentiment = async function() {
             const text = document.getElementById('textInput').value;
@@ -56,16 +35,27 @@
             
             resultDiv.style.display = 'block';
             
+            // Initialize the production-ready model if it hasn't loaded yet
             if (!classifier) {
-                await initModel();
+                resultDiv.innerHTML = "🔄 First run: Downloading optimized sentiment model to your browser cache (takes ~10 seconds)...";
+                try {
+                    classifier = await pipeline('text-classification', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
+                } catch (e) {
+                    resultDiv.innerHTML = "⚠️ Error loading the public model pipeline.";
+                    return;
+                }
             }
             
-            resultDiv.innerHTML = "🧠 Running on-device sentiment inference classification...";
+            resultDiv.innerHTML = "🧠 Running on-device sentiment classification...";
             try {
                 const results = await classifier(text.trim());
-                resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n${JSON.stringify(results, null, 2)}`;
+                
+                // Format output nicely on the screen
+                const label = results[0].label;
+                const score = (results[0].score * 100).toFixed(2);
+                resultDiv.innerHTML = `<strong>Analysis Results:</strong>\n\n🎯 Predicted Sentiment: <strong>${label}</strong>\n📈 Confidence Score: <strong>${score}%</strong>`;
             } catch (error) {
-                resultDiv.innerHTML = "⚠️ Could not run classification. If your model uses specific custom PyTorch layers, please verify your Hub repository configuration.";
+                resultDiv.innerHTML = "⚠️ Could not run classification on your text.";
             }
         };
     </script>
